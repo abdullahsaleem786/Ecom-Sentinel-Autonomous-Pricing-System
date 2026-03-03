@@ -1,0 +1,1 @@
+Demand trend measures whether recent demand is increasing, decreasing, or stable compared to the previous period.
