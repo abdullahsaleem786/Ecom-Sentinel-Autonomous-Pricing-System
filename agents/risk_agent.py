@@ -1,10 +1,8 @@
-def risk_agent(price_elasticity, demand_trend):
-
-    if price_elasticity < -2:
+def risk_agent(demand_trend_value):
+    # Use the value directly
+    if demand_trend_value < -0.5:
         return "high_risk"
-
-    elif demand_trend < -0.03:
-        return "falling_demand"
-
+    elif demand_trend_value < 0:
+        return "medium_risk"
     else:
-        return "stable"
+        return "low_risk"
