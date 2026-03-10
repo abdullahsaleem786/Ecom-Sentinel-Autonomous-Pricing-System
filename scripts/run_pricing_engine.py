@@ -51,31 +51,42 @@ df["predicted_units_next_7_days"] = model.predict(df_for_prediction)
 print("\nRunning pricing agents...\n")
 
 
-print("\nRunning pricing agents...\n")
+# 1. Create a list to store the results
+final_results = []
 
 for idx, row in df.iterrows():
-    # 1. Prepare features for the demand agent
-    # Using model.feature_names_in_ ensures the order is ALWAYS correct
-    features = row[model.feature_names_in_].values
+    # Pass the row as a DataFrame slice to keep feature names and avoid the UserWarning
+    # [[...]] ensures it stays a DataFrame, not a Series
+    current_features = df.loc[[idx], model.feature_names_in_]
     
-    # 2. Get signals by passing individual values from the current 'row'
-    demand_signal = demand_agent(features)
-    inventory_signal = inventory_agent(row['inventory_velocity'])  # Pass value, not Series
-    competition_signal = competition_agent(row['price_gap'])        # Pass value, not Series
-    risk_signal = risk_agent(row["demand_trend"])                  # Pass value, not Series
+    # Get demand prediction
+    predicted_demand = model.predict(current_features)[0]
 
-    # 3. Get the final decision from the pricing agent
+    # 2. Call agents with individual values
+    inventory_signal = inventory_agent(row['inventory_velocity'])
+    competition_signal = competition_agent(row['price_gap'])
+    risk_signal = risk_agent(row['demand_trend'])
+    
+    # 3. Get the final decision
     final_decision = pricing_agent(
         inventory_signal,
         competition_signal,
         risk_signal
     )
 
-    # 4. Output results
-    print(f"Product ID: {idx}")
-    print(f"Demand Signal:      {demand_signal}")
-    print(f"Inventory Signal:   {inventory_signal}")
-    print(f"Competition Signal: {competition_signal}")
-    print(f"Risk Signal:        {risk_signal}")
-    print(f"Final Decision:     {final_decision}")
-    print("-" * 40)
+    # 4. Store for the CSV
+    final_results.append({
+        "product_id": idx,
+        "predicted_demand": predicted_demand,
+        "inventory_signal": inventory_signal,
+        "competition_signal": competition_signal,
+        "risk_signal": risk_signal,
+        "final_decision": final_decision
+    })
+
+# 5. Save the results to a CSV
+results_df = pd.DataFrame(final_results)
+output_path = "data/processed/final_pricing_recommendations.csv"
+results_df.to_csv(output_path, index=False)
+
+print(f"Success! Recommendations saved to: {output_path}")
