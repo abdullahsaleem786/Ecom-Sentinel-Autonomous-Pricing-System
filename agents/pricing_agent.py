@@ -1,19 +1,33 @@
-def pricing_agent(inventory_decision, competition_decision, risk_status):
+def pricing_agent(demand_signal, inventory_signal, competition_signal, risk_signal):
 
-    # Risk protection first
-    if risk_status == "high_risk":
-        return "hold_price"
+    score = 0
 
-    # If both agents want increase
-    if inventory_decision == "increase_price" and competition_decision == "increase_price":
+    # Demand signal
+    if demand_signal == "high_demand":
+        score += 2
+    elif demand_signal == "low_demand":
+        score -= 2
+
+    # Inventory signal
+    if inventory_signal == "increase_price":
+        score += 1
+    elif inventory_signal == "lower_price":
+        score -= 1
+
+    # Competition signal
+    if competition_signal == "increase_price":
+        score += 1
+    elif competition_signal == "lower_price":
+        score -= 1
+
+    # Risk signal
+    if risk_signal == "high_risk":
+        score -= 1
+
+    # Final decision
+    if score >= 2:
         return "increase_price"
-
-    # If competition says decrease
-    if competition_decision == "decrease_price":
-        return "decrease_price"
-
-    # If inventory says decrease
-    if inventory_decision == "decrease_price":
-        return "decrease_price"
-
-    return "hold_price"
+    elif score <= -2:
+        return "lower_price"
+    else:
+        return "hold_price"

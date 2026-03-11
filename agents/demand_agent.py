@@ -1,16 +1,10 @@
-import joblib
-import numpy as np
+def demand_agent(predicted_demand):
 
-# Load trained model
-model = joblib.load("models/demand_model.pkl")
-
-def demand_agent(features):
-    
-    prediction = model.predict([features])[0]
-
-    if prediction > 100:
+    if predicted_demand > 80:
         return "high_demand"
-    elif prediction < 50:
+
+    elif predicted_demand < 30:
         return "low_demand"
+
     else:
-        return "stable_demand"
+        return "normal_demand"

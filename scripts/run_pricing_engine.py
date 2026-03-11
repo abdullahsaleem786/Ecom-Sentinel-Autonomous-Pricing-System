@@ -21,8 +21,8 @@ model = joblib.load("models/demand_model.pkl")
 
 
 feature_cols = [
-    "units_sold",
     "price",
+    "units_sold",
     "price_elasticity",
     "inventory_velocity",
     "price_gap",
@@ -55,26 +55,25 @@ print("\nRunning pricing agents...\n")
 final_results = []
 
 for idx, row in df.iterrows():
-    # Pass the row as a DataFrame slice to keep feature names and avoid the UserWarning
-    # [[...]] ensures it stays a DataFrame, not a Series
-    current_features = df.loc[[idx], model.feature_names_in_]
-    
-    # Get demand prediction
-    predicted_demand = model.predict(current_features)[0]
 
-    # 2. Call agents with individual values
+    current_features = df.loc[[idx], model.feature_names_in_]
+
+    predicted_demand = model.predict(current_features)[0]
+    # Convert predicted demand into a demand signal
+
+    demand_signal = demand_agent(predicted_demand)
+
     inventory_signal = inventory_agent(row['inventory_velocity'])
     competition_signal = competition_agent(row['price_gap'])
     risk_signal = risk_agent(row['demand_trend'])
-    
-    # 3. Get the final decision
+
     final_decision = pricing_agent(
+        demand_signal,
         inventory_signal,
         competition_signal,
         risk_signal
     )
 
-    # 4. Store for the CSV
     final_results.append({
         "product_id": idx,
         "predicted_demand": predicted_demand,
@@ -83,10 +82,3 @@ for idx, row in df.iterrows():
         "risk_signal": risk_signal,
         "final_decision": final_decision
     })
-
-# 5. Save the results to a CSV
-results_df = pd.DataFrame(final_results)
-output_path = "data/processed/final_pricing_recommendations.csv"
-results_df.to_csv(output_path, index=False)
-
-print(f"Success! Recommendations saved to: {output_path}")
