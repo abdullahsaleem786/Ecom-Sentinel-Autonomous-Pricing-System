@@ -1,62 +1,90 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-st.title("Ecom Sentinel Pricing Intelligence Dashboard")
+st.set_page_config(page_title="Ecom Sentinel Dashboard", layout="wide")
 
-st.write("Multi-Agent Pricing System Overview")
+st.title("Ecom Sentinel - Autonomous Pricing Intelligence")
 
-# Load data
 df = pd.read_csv("data/processed/pricing_revenue_simulation.csv")
 
+# ---- KPIs ----
 
-# Summary metrics
-total_old_revenue = df["old_revenue"].sum()
-total_new_revenue = df["new_revenue"].sum()
-revenue_change = total_new_revenue - total_old_revenue
+old_rev = df["old_revenue"].sum()
+new_rev = df["new_revenue"].sum()
+rev_change = new_rev - old_rev
 
-col1, col2, col3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-col1.metric("Old Revenue", f"{total_old_revenue:,.2f}")
-col2.metric("New Revenue", f"{total_new_revenue:,.2f}")
-col3.metric("Revenue Change", f"{revenue_change:,.2f}")
-
-st.divider()
-
-# Pricing decisions
-st.subheader("Pricing Decisions Distribution")
-
-decision_counts = df["final_decision"].value_counts()
-
-st.bar_chart(decision_counts)
+c1.metric("Old Revenue", f"${old_rev:,.0f}")
+c2.metric("New Revenue", f"${new_rev:,.0f}")
+c3.metric("Revenue Change", f"${rev_change:,.0f}")
 
 st.divider()
 
-# Top price increases
-st.subheader("Top Products to Increase Price")
+# ---- Decision Distribution ----
 
-increase_df = df[df["final_decision"] == "increase_price"]
+st.subheader("Pricing Decision Distribution")
 
-st.dataframe(
-    increase_df.sort_values("revenue_change", ascending=False)[
-        ["product_id","price","new_price","revenue_change"]
-    ].head(10)
+decision_fig = px.pie(
+    df,
+    names="final_decision",
+    title="Agent Pricing Decisions"
 )
 
+st.plotly_chart(decision_fig, use_container_width=True)
+
 st.divider()
 
-# Top price decreases
-st.subheader("Top Products to Lower Price")
+# ---- Revenue Change Distribution ----
 
-lower_df = df[df["final_decision"] == "lower_price"]
+st.subheader("Revenue Change per Product")
 
-st.dataframe(
-    lower_df.sort_values("revenue_change")[
-        ["product_id","price","new_price","revenue_change"]
-    ].head(10)
+rev_fig = px.histogram(
+    df,
+    x="revenue_change",
+    nbins=40,
+    title="Revenue Change Distribution"
 )
 
+st.plotly_chart(rev_fig, use_container_width=True)
+
 st.divider()
 
-st.subheader("Full Pricing Table")
+# ---- Top Gainers ----
 
-st.dataframe(df)
+st.subheader("Top Revenue Gains")
+
+top_gain = df.sort_values("revenue_change", ascending=False).head(10)
+
+st.dataframe(top_gain[[
+    "product_id",
+    "price",
+    "new_price",
+    "revenue_change"
+]])
+
+# ---- Top Losses ----
+
+st.subheader("Top Revenue Losses")
+
+top_loss = df.sort_values("revenue_change").head(10)
+
+st.dataframe(top_loss[[
+    "product_id",
+    "price",
+    "new_price",
+    "revenue_change"
+]])
+
+st.divider()
+
+# ---- Product Explorer ----
+
+st.subheader("Product Explorer")
+
+product = st.selectbox("Select Product ID", df["product_id"])
+
+product_row = df[df["product_id"] == product]
+
+st.write(product_row)
