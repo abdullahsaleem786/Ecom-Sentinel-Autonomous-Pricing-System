@@ -18,10 +18,10 @@ df["old_revenue"] = df["price"] * df["units_sold"]
 def apply_price_change(row):
 
     if row["final_decision"] == "increase_price":
-        return row["price"] * 1.05   # 5% increase
+        return row["price"] * 1.02   # 5% increase
 
     elif row["final_decision"] == "lower_price":
-        return row["price"] * 0.95   # 5% decrease
+        return row["price"] * 0.98   # 5% decrease
 
     else:
         return row["price"]

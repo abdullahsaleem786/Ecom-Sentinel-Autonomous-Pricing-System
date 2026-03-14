@@ -25,9 +25,9 @@ def pricing_agent(demand_signal, inventory_signal, competition_signal, risk_sign
         score -= 1
 
     # Final decision
-    if score >= 2:
+    if score >= 1:
         return "increase_price"
-    elif score <= -2:
+    elif score <= -1:
         return "lower_price"
     else:
         return "hold_price"
