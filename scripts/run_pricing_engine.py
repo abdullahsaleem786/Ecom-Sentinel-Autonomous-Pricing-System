@@ -10,6 +10,7 @@ from agents.inventory_agent import inventory_agent
 from agents.competition_agent import competition_agent
 from agents.risk_agent import risk_agent
 from agents.pricing_agent import pricing_agent
+from engine.run_optimizer import optimize_price
 
 
 print("Loading pricing features dataset...")
@@ -55,14 +56,12 @@ print("\nRunning pricing agents...\n")
 final_results = []
 
 for idx, row in df.iterrows():
+    predicted_demand = row["predicted_units_next_7_days"]
 
-    current_features = df.loc[[idx], model.feature_names_in_]
-
-    predicted_demand = model.predict(current_features)[0]
     # Convert predicted demand into a demand signal
 
     demand_signal = demand_agent(predicted_demand)
-
+    optimal_price, optimal_revenue = optimize_price(row, model, feature_cols)
     inventory_signal = inventory_agent(row['inventory_velocity'])
     competition_signal = competition_agent(row['price_gap'])
     risk_signal = risk_agent(row['demand_trend'])
@@ -78,6 +77,8 @@ for idx, row in df.iterrows():
         "product_id": idx,
         "predicted_demand": predicted_demand,
         "inventory_signal": inventory_signal,
+        "optimal_price": optimal_price,
+        "optimal_revenue": optimal_revenue,
         "competition_signal": competition_signal,
         "risk_signal": risk_signal,
         "final_decision": final_decision
