@@ -225,6 +225,201 @@ A clean, validated Pandas DataFrame with:
 
 *E-Com Sentinel — Built one phase at a time. 🛡️*
 
+# 📈 E-Com Sentinel — Phase 2: Demand Forecasting Intelligence
+
+> **The Question Phase 2 Answers:**
+> *If the price is X, how many units will likely sell in the next 7 days?*
+
+---
+
+## 📌 Overview
+
+Phase 2 trains a machine learning model to **predict demand under different pricing conditions**. This is not a decision-making layer — it is an advisory layer. The ML model is a calculator, not a boss.
+
+It answers one question precisely and hands the rest off to rules and agents.
+
+---
+
+## 🧠 ML's Role in the System
+
+```
+DATA → Features → ML → Rules + Agents → Price Decision
+```
+
+### ✅ What ML tells us:
+- If price is **X**, how many units will sell in the next 7 days?
+- How does demand change when price increases by 5%?
+- Is demand likely to drop or remain stable?
+
+### ❌ What ML does NOT decide:
+- Whether to increase or decrease the price
+- Whether a product is risky
+- Whether to match a competitor
+
+> Those decisions belong to **rules + agents**. ML is the advisor. Agents are the decision-makers.
+
+---
+
+## 🎯 Target Variable
+
+```
+y = units_sold_next_7_days
+```
+
+**Why 7 days?**
+- Pricing decisions do not affect demand instantly
+- A 7-day window smooths daily noise
+- Captures delayed customer reactions
+- Reflects how pricing actually works in real e-commerce systems
+
+**Why rows without full future windows are dropped:**
+- Prevents incorrect targets
+- Eliminates data leakage
+- Not related to elasticity — purely a data integrity decision
+
+---
+
+## 🗃️ Dataset Structure
+
+Final DataFrame shape: **(24,281 rows × 20 columns)**
+
+| Column | Source | Role |
+|---|---|---|
+| `product_id` | sales_history | Identifier |
+| `decision_date` | sales_history | Timestamp |
+| `price` | sales_history | Feature |
+| `price_elasticity` | Phase 1 | Feature |
+| `inventory_velocity` | Phase 1 | Feature |
+| `price_gap` | Phase 1 | Feature |
+| `demand_trend` | Phase 1 | Feature |
+| `units_sold_next_7_days` | Engineered | **Target (y)** |
+
+---
+
+## ⚙️ Pipeline
+
+### 1️⃣ Data Sources
+- `sales_history` — transaction records
+- `competitor_intel` — competitor price signals
+- `inventory_cost` — stock levels and cost floors
+
+### 2️⃣ Feature Engineering (from Phase 1)
+All features computed and frozen in Phase 1:
+- `price`
+- `price_elasticity`
+- `inventory_velocity`
+- `price_gap`
+- `demand_trend`
+
+### 3️⃣ Data Cleaning
+- Connected SQLite3 → Pandas
+- Merged all 3 tables
+- Added engineered columns
+- Dropped null rows and incomplete future windows
+- Committed clean dataset to GitHub
+
+### 4️⃣ Target Variable
+- Engineered `units_sold_next_7_days` per product per date
+
+### 5️⃣ Model Training
+
+---
+
+## 📊 Model Results
+
+### Baseline — Day 6/7 Sanity Check
+
+```
+Model : Linear Regression
+MSE   : 31.84
+R²    : -1.43
+```
+
+**What this meant:**
+- Dataset signal was weak — synthetic data logic was unrealistic
+- Nothing was broken — this was exactly what the validation checkpoint was designed to reveal
+- A negative R² means the model was worse than predicting the mean
+
+> This is the correct engineering response: **reveal the problem early, fix it deliberately.**
+
+---
+
+### Fixed Model — Day 8
+
+```
+Model : Linear Regression
+MSE   : 1.92
+R²    : 0.93
+```
+
+**What this means:**
+- The model explains **93% of variance** in demand
+- MSE of 1.92 units — tight, production-viable error margin
+- Model is now trustworthy enough to pass signals to Rules + Agents
+
+> R² = 0.93 is the green light. Phase 3 can begin.
+
+---
+
+## 📁 Project Structure (Phase 2)
+
+```
+e-com-sentinel/
+│
+├── data/
+│   └── ecom_sentinel.db              # SQLite database (Phase 1)
+│
+├── phase1/
+│   └── feature_contract.py           # Frozen feature definitions
+│
+├── phase2/
+│   ├── connect_db.py                 # SQLite3 → Pandas connection
+│   ├── build_dataset.py              # Merge tables, engineer target
+│   ├── clean_data.py                 # Drop nulls, remove leakage rows
+│   ├── train_model.py                # Linear Regression training
+│   ├── evaluate_model.py             # MSE, R² reporting
+│   └── model.pkl                     # Saved trained model
+│
+└── README.md
+```
+
+---
+
+## ✅ Phase 2 Deliverables
+
+- [x] ML role defined — advisor, not decision-maker
+- [x] Target variable engineered (`units_sold_next_7_days`)
+- [x] SQLite3 → Pandas pipeline connected
+- [x] All 3 tables merged successfully
+- [x] Feature columns added and validated
+- [x] Null rows and leakage rows dropped
+- [x] Dataset committed to GitHub (24,281 × 20)
+- [x] Baseline model trained (R² = -1.43 — expected failure)
+- [x] Model fixed and retrained (R² = 0.93 ✅)
+- [x] Phase 2 validated and frozen
+
+---
+
+## 🔜 What Phase 3 Receives
+
+A trained Linear Regression model (`model.pkl`) that:
+- Takes `[price, elasticity, inventory_velocity, price_gap, demand_trend]` as input
+- Returns `predicted_units_next_7_days` as output
+- Is scoped strictly to demand forecasting — no pricing decisions embedded
+
+Phase 3 (Multi-Agent System) will query this model, interpret the forecast, and make the actual pricing call.
+
+---
+
+## 📌 Design Principle
+
+> *ML is the advisor. Rules and agents are the decision-makers. A model that knows its boundaries is safer than one that doesn't.*
+
+---
+
+*E-Com Sentinel — Built one phase at a time. 🛡️*
+
+
 SQLite Data
       ↓
 Feature Engineering (Pandas)
