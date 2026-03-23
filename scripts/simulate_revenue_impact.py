@@ -1,79 +1,59 @@
+# scripts/simulate_revenue_impact.py
 import pandas as pd
 
-print("Loading pricing recommendations...")
+print("Loading optimization results...")
+results = pd.read_csv("data/processed/final_pricing_recommendations.csv")
 
-df = pd.read_csv("data/processed/final_pricing_recommendations.csv")
-
-print("Loading pricing features...")
-
+print("Loading pricing features for baseline demand...")
 features = pd.read_csv("data/processed/pricing_features.csv")
 
-# Merge both datasets
-df = df.merge(features, left_on="product_id", right_index=True)
-
-# Old revenue
-df["old_revenue"] = df["price"] * df["units_sold"]
-
-
-def apply_price_change(row):
-
-    if row["final_decision"] == "increase_price":
-        return row["price"] * 1.02   # 5% increase
-
-    elif row["final_decision"] == "lower_price":
-        return row["price"] * 0.98   # 5% decrease
-
-    else:
-        return row["price"]
-
-
-df["new_price"] = df.apply(apply_price_change, axis=1)
-
-def simulate_demand(row):
-
-    price_change_pct = (row["new_price"] - row["price"]) / row["price"]
-
-    demand_change_pct = row["price_elasticity"] * price_change_pct
-
-    new_demand = row["predicted_demand"] * (1 + demand_change_pct)
-
-    return max(new_demand, 0)
-
-
-df["new_units_sold"] = df.apply(simulate_demand, axis=1)
-
-# New revenue
-df["new_revenue"] = df["new_price"] * df["new_units_sold"]
-
-df["revenue_change"] = df["new_revenue"] - df["old_revenue"]
-
-
-print("\n===== REVENUE IMPACT SUMMARY =====\n")
-
-print("Total Old Revenue:", round(df["old_revenue"].sum(),2))
-print("Total New Revenue:", round(df["new_revenue"].sum(),2))
-
-improvement = df["new_revenue"].sum() - df["old_revenue"].sum()
-
-print("Revenue Change:", round(improvement,2))
-
-
-print("\nTop Revenue Gains")
-
-print(
-    df.sort_values("revenue_change", ascending=False)[
-        ["product_id","revenue_change"]
-    ].head(5)
+# Get most recent row per product — need demand_trend as baseline demand proxy
+latest_features = (
+    features.sort_values("date")
+    .groupby("product_id")
+    .last()
+    .reset_index()[["product_id", "demand_trend"]]
 )
 
-print("\nTop Revenue Losses")
+df = results.merge(latest_features, on="product_id")
 
+# Baseline revenue = current price × baseline demand
+df["old_revenue"] = df["current_price"] * df["demand_trend"]
+
+# New revenue = optimizer output directly
+df["new_revenue"] = df["optimal_price"] * df["predicted_demand"]
+
+df["revenue_change"] = df["new_revenue"] - df["old_revenue"]
+df["revenue_change_pct"] = (
+    df["revenue_change"] / df["old_revenue"].replace(0, 1) * 100
+).round(2)
+df["price_change_pct"] = (
+    (df["optimal_price"] - df["current_price"]) / df["current_price"] * 100
+).round(2)
+
+print("\n===== REVENUE IMPACT SUMMARY =====\n")
+print(f"Products evaluated:   {len(df)}")
+print(f"Old total revenue:   ${df['old_revenue'].sum():,.2f}")
+print(f"New total revenue:   ${df['new_revenue'].sum():,.2f}")
+print(f"Revenue change:      ${df['revenue_change'].sum():,.2f}")
+print(f"Revenue lift:        {df['revenue_change'].sum() / df['old_revenue'].sum() * 100:+.2f}%")
+
+print("\nDecision distribution:")
+print(df["decision"].value_counts().to_string())
+
+print("\nTop 5 revenue gains:")
+print(
+    df.sort_values("revenue_change", ascending=False)[
+        ["product_id", "current_price", "optimal_price", "price_change_pct", "revenue_change"]
+    ].head(5).to_string(index=False)
+)
+
+print("\nTop 5 revenue losses:")
 print(
     df.sort_values("revenue_change")[
-        ["product_id","revenue_change"]
-    ].head(5)
+        ["product_id", "current_price", "optimal_price", "price_change_pct", "revenue_change"]
+    ].head(5).to_string(index=False)
 )
 
 df.to_csv("data/processed/pricing_revenue_simulation.csv", index=False)
-
-print("\nSimulation results saved.")
+print("\nSaved → data/processed/pricing_revenue_simulation.csv")

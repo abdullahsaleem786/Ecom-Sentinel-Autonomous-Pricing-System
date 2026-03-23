@@ -1,33 +1,38 @@
-def pricing_agent(demand_signal, inventory_signal, competition_signal, risk_signal):
+# agents/pricing_agent.py
 
-    score = 0
+def pricing_agent(demand_signal, inventory_signal, competition_signal, risk_signal):
+    """
+    Combines agent signals into a (min_multiplier, max_multiplier) range.
+    The optimizer searches within this range for the best price.
+    Agents constrain the search — they do NOT make the final call.
+    """
+    lo, hi = 0.80, 1.20
 
     # Demand signal
     if demand_signal == "high_demand":
-        score += 2
+        lo = max(lo, 0.95)
     elif demand_signal == "low_demand":
-        score -= 2
+        hi = min(hi, 1.05)
 
     # Inventory signal
     if inventory_signal == "increase_price":
-        score += 1
+        lo = max(lo, 1.00)
     elif inventory_signal == "lower_price":
-        score -= 1
+        hi = min(hi, 1.00)
 
     # Competition signal
     if competition_signal == "increase_price":
-        score += 1
+        lo = max(lo, 0.95)
     elif competition_signal == "lower_price":
-        score -= 1
+        hi = min(hi, 1.00)
 
-    # Risk signal
+    # Risk signal — tighten range
     if risk_signal == "high_risk":
-        score -= 1
+        lo = max(lo, 0.92)
+        hi = min(hi, 1.08)
 
-    # Final decision
-    if score >= 1:
-        return "increase_price"
-    elif score <= -1:
-        return "lower_price"
-    else:
-        return "hold_price"
+    # Agents conflicted — hold tight
+    if lo >= hi:
+        return (0.97, 1.03)
+
+    return (round(lo, 2), round(hi, 2))
