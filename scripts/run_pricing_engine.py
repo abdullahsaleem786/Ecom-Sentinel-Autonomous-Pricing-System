@@ -1,6 +1,5 @@
 # scripts/run_pricing_engine.py
-import sys
-import os
+import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
@@ -15,19 +14,15 @@ from engine.run_optimizer import optimize_price
 print("Loading pricing features dataset...")
 df = pd.read_csv("data/processed/pricing_features.csv")
 
-print("Loading trained ML model...")
-model = joblib.load("models/demand_model.pkl")
+print("Loading demand curves...")
+curves = joblib.load("models/demand_model.pkl")
 
-# No units_sold — model was retrained without it
-FEATURE_COLS = list(model.feature_names_in_)
-print(f"Model features: {FEATURE_COLS}")
-
-# cost_price column comes from retrain script — verify it exists
+# cost_price column check
 if "cost_price" not in df.columns:
     df["cost_price"] = df["price"] * 0.60
     print("WARNING: cost_price missing. Estimating as 60% of price.")
 
-# Get one row per product — most recent date
+# One row per product — most recent date
 latest = (
     df.sort_values("date")
     .groupby("product_id")
@@ -35,24 +30,24 @@ latest = (
     .reset_index()
 )
 
-print(f"\nOptimizing prices for {len(latest)} products...\n")
+print(f"Optimizing prices for {len(latest)} products...\n")
 
 final_results = []
 
 for _, row in latest.iterrows():
-    # Agent signals
-    d_signal = demand_agent(row["demand_trend"])
-    i_signal = inventory_agent(row["inventory_velocity"])
+    # Agent signals use available context features
+    d_signal = demand_agent(row["base_demand"])
+    i_signal = inventory_agent(row["price_ratio"])
     c_signal = competition_agent(row["price_gap"])
-    r_signal = risk_agent(row["demand_trend"])
+    r_signal = risk_agent(row["price_elasticity"])
 
     # Agents return multiplier range
     mult_range = pricing_agent(d_signal, i_signal, c_signal, r_signal)
 
-    # Optimizer finds best price within that range
+    # Optimizer uses demand curves dict
     best_price, best_revenue, best_demand, decision = optimize_price(
         row=row,
-        model=model,
+        model=curves,
         cost_price=float(row["cost_price"]),
         multiplier_range=mult_range,
     )

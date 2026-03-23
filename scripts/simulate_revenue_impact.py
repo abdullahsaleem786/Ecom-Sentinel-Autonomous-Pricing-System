@@ -4,26 +4,26 @@ import pandas as pd
 print("Loading optimization results...")
 results = pd.read_csv("data/processed/final_pricing_recommendations.csv")
 
-print("Loading pricing features for baseline demand...")
+print("Loading pricing features for baseline...")
 features = pd.read_csv("data/processed/pricing_features.csv")
 
-# Get most recent row per product — need demand_trend as baseline demand proxy
+# Get most recent row per product — base_demand is our baseline proxy
 latest_features = (
     features.sort_values("date")
     .groupby("product_id")
     .last()
-    .reset_index()[["product_id", "demand_trend"]]
+    .reset_index()[["product_id", "base_demand"]]
 )
 
 df = results.merge(latest_features, on="product_id")
 
-# Baseline revenue = current price × baseline demand
-df["old_revenue"] = df["current_price"] * df["demand_trend"]
+# Baseline revenue = current price × base daily demand × 7 days
+df["old_revenue"] = df["current_price"] * df["base_demand"] * 7
 
-# New revenue = optimizer output directly
+# New revenue comes directly from optimizer
 df["new_revenue"] = df["optimal_price"] * df["predicted_demand"]
 
-df["revenue_change"] = df["new_revenue"] - df["old_revenue"]
+df["revenue_change"]     = df["new_revenue"] - df["old_revenue"]
 df["revenue_change_pct"] = (
     df["revenue_change"] / df["old_revenue"].replace(0, 1) * 100
 ).round(2)

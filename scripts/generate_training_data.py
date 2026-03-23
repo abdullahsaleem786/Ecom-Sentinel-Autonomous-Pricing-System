@@ -15,10 +15,9 @@ PRODUCTS = []
 for i in range(N_PRODUCTS):
     base_price  = round(np.random.uniform(20, 100), 2)
     base_demand = np.random.randint(40, 120)
-    # Stronger elasticity, always negative, less variance
     elasticity  = round(np.random.uniform(-2.0, -0.8), 2)
     PRODUCTS.append({
-        "product_id":  f"P{i+1:03d}",
+        "product_id": f"P{i+1:03d}",
         "base_price":  base_price,
         "base_demand": base_demand,
         "elasticity":  elasticity,
@@ -33,42 +32,37 @@ def generate_sales(products, n_days, start_date):
         for d in range(n_days):
             date = start_date + timedelta(days=d)
 
-            # Tighter price variation — signal stronger than noise
+            # Price varies around base — no promotions, pure price signal
             price_mult = np.random.choice(
                 [0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15],
-                p=[0.05, 0.10, 0.20, 0.30, 0.20, 0.10, 0.05]
+                p=[0.05, 0.15, 0.25, 0.20, 0.20, 0.10, 0.05]
             )
             price = round(p["base_price"] * price_mult, 2)
 
-            # Demand responds to price — this is the core signal
+            # Demand responds ONLY to price via elasticity — no promotion noise
             price_change_pct  = (price - p["base_price"]) / p["base_price"]
             demand_change_pct = p["elasticity"] * price_change_pct
             expected_demand   = p["base_demand"] * (1 + demand_change_pct)
 
-            # Noise at 5% — tight enough that price signal dominates
-            units_sold = max(1, int(np.random.normal(expected_demand, expected_demand * 0.05)))
-
-            promotion = np.random.choice(["yes", "no"], p=[0.10, 0.90])
-            if promotion == "yes":
-                units_sold = int(units_sold * np.random.uniform(1.1, 1.3))
+            # Very tight noise — 3% only
+            units_sold = max(1, int(np.random.normal(expected_demand, expected_demand * 0.03)))
 
             rows.append({
                 "date":             date.strftime("%Y-%m-%d"),
                 "product_id":       p["product_id"],
                 "units_sold":       units_sold,
                 "price":            price,
-                "promotion_status": promotion,
+                "promotion_status": "no",   # no promotions — clean signal
             })
     return pd.DataFrame(rows)
 
 
 def generate_competitor_intelligence(products, n_days, start_date):
     rows = []
-    competitors = ["CompA", "CompB", "CompC"]
     for p in products:
         for d in range(0, n_days, 7):
             date = start_date + timedelta(days=d)
-            for comp in competitors:
+            for comp in ["CompA", "CompB", "CompC"]:
                 rows.append({
                     "product_id":       p["product_id"],
                     "competitor_price": round(p["base_price"] * np.random.uniform(0.88, 1.12), 2),
@@ -87,9 +81,7 @@ def generate_inventory_cost(products):
 
 def seed(db_path):
     conn = sqlite3.connect(db_path)
-    cur  = conn.cursor()
-
-    cur.executescript("""
+    conn.cursor().executescript("""
         DROP TABLE IF EXISTS sales_history;
         DROP TABLE IF EXISTS competitor_intelligence;
         DROP TABLE IF EXISTS inventory_cost;
@@ -126,12 +118,11 @@ def seed(db_path):
 
     conn.commit()
 
-    # Verification
     df = pd.read_sql("SELECT price, units_sold FROM sales_history", conn)
     corr = df.corr()["units_sold"]["price"]
     print(f"Rows inserted:            {len(sales_df)}")
     print(f"Unique products:          {sales_df['product_id'].nunique()}")
-    print(f"Price-demand correlation: {corr:.4f}  (target: below -0.5)")
+    print(f"Price-demand correlation: {corr:.4f}  (target: below -0.6)")
     conn.close()
 
 
