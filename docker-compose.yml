@@ -1,0 +1,27 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+
+  dashboard:
+    build: .
+    container_name: ecom-sentinel-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./market_data.db:/app/market_data.db
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: ecom-sentinel-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./market_data.db:/app/market_data.db
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
