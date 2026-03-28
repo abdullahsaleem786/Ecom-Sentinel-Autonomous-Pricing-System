@@ -1,4 +1,23 @@
-# 🛡️ E-Com Sentinel — Phase 1: Data & Feature Engineering
+# 🛡️ E-Com Sentinel — Autonomous Multi-Agent Pricing Intelligence System
+
+## 🚀 Live Deployment
+
+| Service | URL | Status |
+|---------|-----|--------|
+| Dashboard | https://ecom-sentinel-autonomous-pricing-system-production.up.railway.app | 🟢 Live |
+
+## 📌 Project Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Data & Feature Engineering | ✅ Complete |
+| Phase 2 | Demand Forecasting (ML) | ✅ Complete |
+| Phase 3 | Multi-Agent Pricing System | ✅ Complete |
+| Phase 4 | Real-Time Pricing Engine | ✅ Complete |
+| Phase 5 | Dashboard & Revenue Simulation | ✅ Complete |
+| Phase 6 | Price Optimization Engine | ✅ Complete |
+| Phase 7 | Cloud & Production Deployment | ✅ Complete |
+
 
 > **The Question Phase 1 Answers:**
 > *Do we even have trustworthy, structured data to make autonomous pricing decisions?*
@@ -842,3 +861,115 @@ That’s the difference between:
 * a student project
 * and something that actually *resembles production thinking*
 
+---
+
+# ☁️ Phase 7: Cloud & Production Deployment
+
+> **The Question Phase 7 Answers:**
+> *Can this system run continuously in the cloud, serving real pricing decisions to anyone?*
+
+---
+
+## 📌 Overview
+
+Phase 7 takes E-Com Sentinel from a local script to a production system running on cloud infrastructure. Real data, containerized pipeline, live API, public dashboard.
+
+---
+
+## 🔄 What Was Built
+
+### ✅ Day 1 — Real Data Integration
+
+Replaced synthetic data with real Olist Brazilian E-Commerce dataset:
+
+- 30 real products extracted by sales volume
+- Real price ranges: $22 – $350
+- 8 product categories
+- Hybrid demand calibrated to real price distributions
+- Price-demand correlation: -0.87
+- Demand curves avg R²: 0.750
+- Revenue lift on real data: **+3.93%**
+
+---
+
+### ✅ Day 2 — Dockerization
+
+Packaged entire pipeline into a Docker container:
+```dockerfile
+FROM python:3.13.0-slim
+```
+
+- Minimal `requirements.txt` — 10 packages only
+- Dashboard service on port 8501
+- FastAPI pricing API on port 8000
+- Single command to run entire system:
+```bash
+docker run -p 8501:8501 ecom-sentinel
+```
+
+#### FastAPI Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | System health check |
+| `/products` | GET | List all product IDs |
+| `/optimize` | POST | Get optimal price for a product |
+| `/optimize/{product_id}` | GET | Quick optimize by product ID |
+
+---
+
+### ✅ Day 3 — Cloud Deployment
+
+Deployed to Railway cloud infrastructure:
+
+- Connected GitHub repo to Railway
+- Docker container deployed to **us-west2**
+- Auto-redeploy on every `git push` to master
+- Public dashboard URL live
+
+**Live URL:**
+```
+https://ecom-sentinel-autonomous-pricing-system-production.up.railway.app
+```
+
+---
+
+## 🏗️ Production Architecture
+```
+GitHub (master branch)
+        ↓  auto-deploy
+Railway Cloud (us-west2)
+        ↓
+Docker Container
+    ├── Streamlit Dashboard  (port 8501)
+    └── FastAPI Pricing API  (port 8000)
+              ↓
+    Per-product demand curves
+              ↓
+    Price optimizer (argmax)
+              ↓
+    Optimal price recommendation
+```
+
+---
+
+## 📊 Final System Results
+
+| Metric | Value |
+|--------|-------|
+| Products optimized | 30 real Olist products |
+| Demand curve avg R² | 0.750 |
+| Revenue lift | +3.93% |
+| Revenue losses | 0 |
+| Deployment | Live on Railway |
+| API response | < 100ms |
+
+---
+
+## 📌 Design Principle
+
+> *A model that runs only on your laptop is not a product. A system that runs in the cloud, serves real data through an API, and redeploys automatically — that is.*
+
+---
+
+*E-Com Sentinel — Built one phase at a time. 🛡️*
