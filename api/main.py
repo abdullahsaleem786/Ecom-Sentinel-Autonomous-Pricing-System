@@ -102,3 +102,10 @@ def optimize(request: PriceRequest):
 @app.get("/optimize/{product_id}", response_model=PriceResponse)
 def optimize_get(product_id: str):
     return optimize(PriceRequest(product_id=product_id))
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
+
