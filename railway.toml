@@ -1,10 +1,11 @@
+
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [[services]]
 name = "dashboard"
-startCommand = "streamlit run dashboard/pricing_dashboard.py --server.port=8501 --server.address=0.0.0.0"
+startCommand = "python api/main.py"
 
 [[services]]
 name = "api"

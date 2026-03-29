@@ -5,6 +5,11 @@
 | Service | URL | Status |
 |---------|-----|--------|
 | Dashboard | https://ecom-sentinel-autonomous-pricing-system-production.up.railway.app | 🟢 Live |
+| Service | URL | Status |
+|---------|-----|--------|
+| Dashboard | https://ecom-sentinel-autonomous-pricing-system-production.up.railway.app | 🟢 Live |
+| Pricing API | https://perceptive-enchantment-production-98cd.up.railway.app | 🟢 Live |
+| API Docs | https://perceptive-enchantment-production-98cd.up.railway.app/docs | 🟢 Live |
 
 ## 📌 Project Status
 
