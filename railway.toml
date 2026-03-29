@@ -9,13 +9,3 @@ startCommand = "streamlit run dashboard/pricing_dashboard.py --server.port=8501 
 [[services]]
 name = "api"
 startCommand = "uvicorn api.main:app --host 0.0.0.0 --port 8000"
-```
-
-Also create a `.railwayignore` file to stop Railway from uploading unnecessary files:
-```
-archive (6)/
-.venv/
-.venv-1/
-__pycache__/
-.pytest_cache/
-*.pyc
