@@ -460,7 +460,7 @@ Pricing Agent (Final Brain)
 Price Decision
 
 
-# ⚙️ Phase 4: Real-Time Pricing Engine
+#  Phase 4: Real-Time Pricing Engine
 
 > **The Question Phase 4 Answers:**
 > *Can the system run end-to-end automatically and generate pricing decisions at scale?*
