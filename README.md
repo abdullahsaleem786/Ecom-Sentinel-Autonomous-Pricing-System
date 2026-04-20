@@ -11,6 +11,7 @@
 | Pricing API | https://perceptive-enchantment-production-98cd.up.railway.app | 🟢 Live |
 | API Docs | https://perceptive-enchantment-production-98cd.up.railway.app/docs | 🟢 Live |
 
+
 ## 📌 Project Status
 
 | Phase | Description | Status |
